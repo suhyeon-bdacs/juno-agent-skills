@@ -1,13 +1,13 @@
 ---
 name: work
-description: "workspace/plan.md 의 다음 미완료 Task 1개를 TDD 사이클(test-coder → coder → code-review → verifier → simplify)로 자동 진행하고 test/code/refactor 3개 커밋으로 마무리하는 스킬. '/work', 'work', '다음 task', '다음 task 진행', '다음 task 진행해줘', '다음 작업', '다음 작업 시작', '다음 작업 진행', '다음 거 작업', '다음 거 진행', 'tdd 사이클', 'tdd 진행', 'tdd 한 번 돌려', 'red green refactor', '한 사이클 돌려', '다음 단계 진행', 'plan 다음 task', 'workspace 다음 task', 'task 이어서 진행', 'phase x task y 진행', 'task 1.x 진행' 등 workspace/plan.md 의 Task 를 이어서 진행하려는 모든 표현에 반드시 사용한다."
+description: "workspace/plan.md 의 다음 미완료 Task 1개를 TDD 사이클(test-coder → coder → code-review → verifier → simplify)로 자동 진행하고 plan.md 커밋 계획에 따라 정해진 커밋에 넣어 마무리하는 스킬. '/work', 'work', '다음 task', '다음 task 진행', '다음 task 진행해줘', '다음 작업', '다음 작업 시작', '다음 작업 진행', '다음 거 작업', '다음 거 진행', 'tdd 사이클', 'tdd 진행', 'tdd 한 번 돌려', 'red green refactor', '한 사이클 돌려', '다음 단계 진행', 'plan 다음 task', 'workspace 다음 task', 'task 이어서 진행', 'phase x task y 진행', 'task 1.x 진행' 등 workspace/plan.md 의 Task 를 이어서 진행하려는 모든 표현에 반드시 사용한다."
 ---
 
 # /work — Task 1개 TDD 사이클 실행
 
 `workspace/plan.md` 의 **다음 미완료 Task 1개** 를 자동 선택하고
 test-coder → coder → code-review → verifier → simplify 순으로 진행한 뒤
-test / code / refactor 3개 커밋으로 마무리한다.
+변경분을 plan.md `# Commits` 에서 이 Task 가 속한 커밋에 넣어 마무리한다 (커밋 규칙은 아래 "커밋 규칙" 절).
 
 ## 전제 조건
 
@@ -33,7 +33,7 @@ test / code / refactor 3개 커밋으로 마무리한다.
      - 사용자에게 새 작업 브랜치명을 물어본다:
        ```
        현재 main 브랜치입니다. 작업용 브랜치를 새로 만들겠습니다.
-       브랜치명을 입력하세요 (예: feature/phase-1-task-1):
+       브랜치명을 입력하세요 (예: BA-2291 — 티켓 번호):
        ```
      - 입력받은 이름으로 새 브랜치를 만들고 checkout:
        ```bash
@@ -85,8 +85,8 @@ test / code / refactor 3개 커밋으로 마무리한다.
    - 매칭 안되면 사용자에게 1회 확인:
      `CLAUDE.md 에 빌드 명령 라인이 없습니다. 어떤 명령을 사용할까요? (기본: ./gradlew test)`
 
-4. `workspace/plan.md` 의 `# Project` 섹션에서 `commit name` 추출.
-   없으면 사용자에게 확인.
+4. `workspace/plan.md` 에서 `ticket` 과 `# Commits` 목록(C1, C2, ...) 추출.
+   없으면(예전 plan.md) 사용자에게 커밋 목록을 제안하고 확인받아 plan.md 에 추가한다 (추측 금지).
 
 ### Step 2: 다음 Task 선정
 
@@ -130,19 +130,9 @@ test / code / refactor 3개 커밋으로 마무리한다.
    - **BUILD SUCCESSFUL**: 테스트가 실패하지 않음 → 테스트가 의미 있는지 사용자 확인 요청 후 일시 중단
    - **컴파일 실패**: 스켈레톤 누락 가능성 → test-coder 에게 보강 요청 1회 재호출, 그래도 실패 시 중단
 
-### Step 4: test 커밋
+### Step 4: (커밋 없음)
 
-변경된 테스트/스켈레톤 파일만 add 후 커밋:
-
-```bash
-git add {test/skeleton 파일들}
-git commit -m "test: {commit-name} [phase-{N}] [task-{N.M}] {Task 설명}"
-```
-
-> `git commit` 은 plugin 의 PreToolUse hook 으로 ask 권한 프롬프트가 뜬다.
-> 사용자가 거부하면 스킬은 즉시 중단하고 보고만 한다.
-
-커밋 hash 를 기록해 둔다 (Step 9 에서 사용).
+Red 단계의 테스트·스켈레톤 변경분은 커밋하지 않고 워킹트리에 둔다. 커밋은 Task 끝(Step 8.5)에 한다.
 
 ### Step 5: Green 단계 (coder)
 
@@ -162,12 +152,12 @@ git commit -m "test: {commit-name} [phase-{N}] [task-{N.M}] {Task 설명}"
 
 ### Step 5.5: code-review (커밋 전 버그 게이트)
 
-Green 빌드 성공 직후, **아직 커밋하기 전**(워킹트리에 구현 diff 가 남아있는 상태)에서 내장 `code-review` skill 을 호출한다.
+Green 빌드 성공 직후, **커밋하기 전**(워킹트리에 구현 diff 가 남아있는 상태)에서 내장 `code-review` skill 을 호출한다.
 
 - 옵션: `--fix` / `--comment` **둘 다 사용하지 않는다** (read-only 리뷰만). effort 는 **low 또는 medium** (high 는 불확실 finding 이 많아 게이트가 시끄러워짐).
 - 목적: 방금 짠 구현 diff 의 correctness 버그 탐지. 정리(cleanup) finding 은 Step 8 `simplify` 와 겹치므로 **버그성 finding 위주로** 판단한다.
 - 결과 판정:
-  - **심각 버그 없음**: 다음 단계(Step 6 커밋)로 진행.
+  - **심각 버그 없음**: 다음 단계(Step 7)로 진행.
   - **심각 버그 발견**:
     ```
     ⚠️ code-review 가 버그를 지적했습니다.
@@ -175,17 +165,7 @@ Green 빌드 성공 직후, **아직 커밋하기 전**(워킹트리에 구현 d
     → coder 재호출로 수정 / 수동 수정 / 무시하고 진행 중 선택하세요.
     ```
     커밋하지 않고 **중단**, 사용자 결정을 받는다. 수정 후 빌드가 다시 Green 이면 이 단계를 재실행한다.
-- `code-review` 가 가용하지 않으면 한 줄 보고 후 스킵하고 Step 6 으로 진행한다.
-
-### Step 6: code 커밋
-
-```bash
-git add {구현 파일들}
-git commit -m "feat: {commit-name} [phase-{N}] [task-{N.M}] {Task 설명}"
-```
-
-prefix(`feat`/`fix`/`refactor`/`chore`)는 Task 성격에 맞게 선택.
-plan.md 에 별도 명시가 없으면 기본 `feat`. fix Task 면 `fix`.
+- `code-review` 가 가용하지 않으면 한 줄 보고 후 스킵하고 Step 7 로 진행한다.
 
 ### Step 7: Verifier
 
@@ -207,20 +187,39 @@ plan.md 에 별도 명시가 없으면 기본 `feat`. fix Task 면 `fix`.
      ```
      ⏭️ simplify 미가용 — refactor 단계 스킵.
      ```
-     Step 9 로.
+     Step 8.5 로.
 
 2. 호출 후 변경사항이 있으면 자동 빌드 (Step 3 와 동일 패턴).
-   - **BUILD SUCCESSFUL**: refactor 커밋 생성
-     ```bash
-     git add {변경 파일들}
-     git commit -m "refactor: {commit-name} [phase-{N}] [task-{N.M}] {Task 설명}"
-     ```
+   - **BUILD SUCCESSFUL**: Step 8.5 로 (refactor 변경분도 같은 커밋에 들어간다)
    - **BUILD FAILED**:
      ```
      ❌ Refactor 후 빌드 실패. 로그: workspace/.last_build.log
      ```
      중단. 사용자가 결정.
-   - **변경사항 없음**: refactor 커밋 생략.
+   - **변경사항 없음**: Step 8.5 로.
+
+### Step 8.5: 커밋 (plan 의 커밋 계획대로)
+
+이번 Task 의 변경분(테스트·구현·refactor)을 plan.md 에서 이 Task 에 적힌 커밋 `C{n}` 에 넣는다.
+
+1. 이 브랜치에 `C{n}` 메시지와 같은 커밋이 이미 있는지 확인:
+   ```bash
+   git log --format='%H %s' {base}..HEAD
+   ```
+   `{base}` 는 분기한 브랜치(보통 `origin/main`). 모르면 사용자에게 확인.
+2. 분기:
+   - **`C{n}` 커밋이 없다** → 새 커밋:
+     ```bash
+     git add {이번 Task 변경 파일들}
+     git commit -m "{C{n} 메시지}"
+     ```
+   - **`C{n}` 커밋이 HEAD 이고 아직 push 안 됐다** (`git status -sb` 에 upstream 이 없거나 ahead 상태) → 그 커밋에 합친다:
+     ```bash
+     git add {이번 Task 변경 파일들}
+     git commit --amend --no-edit
+     ```
+   - **`C{n}` 커밋이 HEAD 가 아니거나 이미 push 됐다** → amend·rebase·force push 하지 않는다. 같은 메시지로 새 커밋을 만들고, 완료 보고에 "MR 전에 커밋 계획대로 정리 필요"를 적는다. 정리(squash·force push)는 사용자가 지시할 때만 한다.
+3. 진행 중에 커밋 계획을 바꿔야 할 것 같으면(성격이 다른 변경이 새로 생김 등) 커밋하기 전에 사용자에게 묻고 plan.md `# Commits` 를 고친다. 혼자 커밋을 늘리지 않는다.
 
 ### Step 9: plan.md Task 체크 + handoff.md 갱신
 
@@ -229,12 +228,9 @@ plan.md 에 별도 명시가 없으면 기본 `feat`. fix Task 면 `fix`.
 2. `workspace/handoff.md` 갱신:
    - `마지막 수정일` 현재 시각으로 변경
    - `완료 Phase` / `진행 Phase` / `다음 Phase` 업데이트
-   - `commit log` 섹션에 이번 사이클 커밋 hash 추가:
+   - `commit log` 섹션 갱신 (amend 하면 hash 가 바뀌므로 최신 것으로 덮어쓴다):
      ```
-     - [phase-{N}] [task-{N.M}] {Task 설명}
-       - test    {hash} test: ...
-       - code    {hash} feat: ...
-       - refactor {hash} refactor: ...   (있을 때만)
+     - C{n} {hash} {메시지} — Task {N.M}, ... 포함
      ```
 
 3. 변경된 plan.md / handoff.md 는 별도 커밋하지 않는다 (다음 `/work` 또는 `/close` 호출 시 함께 처리).
@@ -245,10 +241,7 @@ plan.md 에 별도 명시가 없으면 기본 `feat`. fix Task 면 `fix`.
 ```
 ✅ Phase {N} / Task {N.M} 완료
 
-커밋:
-  - test  {hash}  test: ...
-  - code  {hash}  feat: ...
-  - refactor {hash}  refactor: ...   (있을 때만)
+커밋: C{n} {hash} {메시지}  (새 커밋 / amend / 정리 필요 중 하나)
 
 plan.md: Task {N.M} 체크 완료
 handoff.md: commit log 갱신
@@ -264,9 +257,15 @@ handoff.md: commit log 갱신
 
 - **빌드 결과 판단은 tail -25 만 본다**: 더 자세한 분석이 필요하면 사용자에게 `workspace/.last_build.log` 직접 확인 요청.
 - **agent 안에서 빌드/테스트 명령을 직접 실행하지 못하도록** test-coder/coder 호출 프롬프트에 명시 (이미 agent 정의에 적혀 있지만 한 번 더 강조).
-- **커밋 메시지 prefix 는 plan.md 의 commit name 을 그대로 사용**. 추측 금지.
+- **커밋 규칙**
+  - 형식: `{type}: {한국어 설명} [{ticket}]` 한 줄. 필요하면 `fix(otc): ...` 처럼 scope 를 붙이고, 본문은 필요할 때만 불릿으로.
+  - 커밋은 최대한 적게, 그래도 무슨 작업인지 구분되게. 기본 티켓당 1개, 성격이 확실히 다른 변경이 섞일 때만 2~3개. 단위는 plan.md `# Commits` 가 정한다.
+  - `[phase-N]` `[task-N.M]` 태그, commit-name prefix 를 쓰지 않는다.
+  - `Co-Authored-By` 등 attribution trailer 를 넣지 않는다.
+  - Task·Phase 별로 커밋을 나누지 않는다.
+  - 메시지는 plan.md `# Commits` 의 것을 그대로 쓴다. 추측 금지.
 - **`workspace/.last_build.log` 는 `.gitignore` 에 포함된 `workspace/` 하위라서 별도 ignore 불필요**.
-- **PreToolUse ask hook 이 git commit 마다 뜸**: 사용자가 거부하면 즉시 중단. amend/force 로 우회하지 않는다.
+- **PreToolUse ask hook 이 git commit 마다 뜸 (amend 포함)**: 사용자가 거부하면 즉시 중단한다. 거부된 커밋을 다른 방식으로 우회하지 않고, push 된 커밋을 amend·force push 하지 않는다.
 - **Task 1개 단위로 종료한다**: Phase 전체 자동 진행 금지. 매 호출마다 다음 Task 1개씩.
 - **Verifier FAIL 시 자동 수정 금지**: 반드시 사용자 결정.
 - **`main`/`master` 직접 작업 금지**: Step 0 에서 브랜치를 확정하기 전에는 agent 호출/커밋을 시작하지 않는다. main 이면 새 브랜치명을 물어 `checkout -b`, 다른 브랜치면 진행 여부를 1회 확인한다.

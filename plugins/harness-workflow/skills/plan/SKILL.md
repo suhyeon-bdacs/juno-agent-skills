@@ -50,7 +50,12 @@ description: "요구사항 문서(링크 또는 파일 경로)를 기반으로 w
 
 # Project
 - project name : {archive를 위한 프로젝트 이름}
-- commit name : {커밋시 prefix로 사용할 이름 (예: able-wlf)}
+- ticket : {Jira 티켓 번호 (예: BA-2291)}
+
+# Commits
+
+<!-- 기본 1개. 성격이 확실히 다른 변경이 섞일 때만 2~3개 (예: 기능 추가 / 안 쓰는 코드 삭제 / 운영 설정·README) -->
+- C1 {type}: {한국어 설명} [{ticket}]
 
 # Phases
 
@@ -59,15 +64,15 @@ description: "요구사항 문서(링크 또는 파일 경로)를 기반으로 w
 - **목적**:
 
 ### Tasks:
-- [ ] Task 1.1 — {설명}
-- [ ] Task 1.2 — {설명}
+- [ ] Task 1.1 — {설명} (→ C1)
+- [ ] Task 1.2 — {설명} (→ C1)
 
 ## Phase 2: {제목}
 
 - **목적**:
 
 ### Tasks:
-- [ ] Task 2.1 — {설명}
+- [ ] Task 2.1 — {설명} (→ C1)
 
 ## Risks & Mitigations
 
@@ -90,7 +95,14 @@ description: "요구사항 문서(링크 또는 파일 경로)를 기반으로 w
 
 **작성 규칙**:
 - Phase = 독립적으로 완료 가능한 작업 단위 (1~3일 분량)
-- Task = TDD 사이클 단위로 쪼갬 (test / code / refactor 각 1커밋)
+- Task = TDD 사이클 단위로 쪼갬. 커밋 단위가 아니다
+- **커밋 계획 (`# Commits`)**: 커밋은 최대한 적게, 그래도 무슨 작업인지 구분되게 정한다
+  - 기본은 티켓당 1개
+  - 리뷰어가 따로 보는 게 나은, 성격이 확실히 다른 변경이 섞일 때만 2~3개로 나눈다 (예: 기능 추가 + 안 쓰는 코드 삭제, 서버 로직 + 운영 설정·README)
+  - Phase·Task 단위로 나누지 않는다 (Phase 는 작업 순서 단위이지 리뷰 단위가 아니다)
+  - 형식: `{type}: {한국어 설명} [{ticket}]`, 필요하면 `fix(otc): ...` 처럼 scope. type 은 feat / fix / refactor / chore / test
+  - 모든 Task 끝에 `(→ C{n})` 로 들어갈 커밋을 적는다
+  - 커밋 목록은 완료 보고에서 사용자에게 보여주고 확인받는다
 - 추측 금지 — 요구사항에서 도출되지 않는 내용은 `{TODO: 확인 필요}` 플레이스홀더
 
 ### Step 4: handoff.md 작성
@@ -151,7 +163,9 @@ description: "요구사항 문서(링크 또는 파일 경로)를 기반으로 w
 
 TODO 플레이스홀더: {N}건 (있으면 목록)
 
-커밋 prefix: {commit-name}
+커밋 계획 ({K}개, 확인 부탁):
+  - C1 {type}: {설명} [{ticket}]  ← Task ...
+  - ...
 
 다음 단계:
   - /work 호출 — Task 1개씩 TDD 사이클(브랜치 확보 → test-coder → coder → code-review → verifier → simplify)을 자동 진행

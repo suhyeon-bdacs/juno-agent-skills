@@ -8,7 +8,7 @@
 | 종류 | 이름 | 역할 |
 |---|---|---|
 | Skill | `/plan` | 요구사항 → `workspace/` 초기화 + `plan.md` 작성 |
-| Skill | `/work` | plan.md 다음 Task 1개를 TDD 사이클(red→green→verify→refactor)로 자동 진행 + test/code/refactor 3커밋 |
+| Skill | `/work` | plan.md 다음 Task 1개를 TDD 사이클(red→green→verify→refactor)로 자동 진행 + plan 의 커밋 계획대로 커밋 |
 | Skill | `/close` | 작업 완료 → `archive/` 이동 + brain 기록 |
 | Agent | `test-coder` | Red 단계 — 실패 테스트 작성 |
 | Agent | `coder` | Green 단계 — 기능 구현 |
@@ -28,19 +28,16 @@
 ──── /work 1회 호출 = Task 1개 ────
 [test-coder]                  실패 테스트 + 스켈레톤
   ↓ 자동 빌드 (redirect+tail) → Red 자동 판정
-git commit  test: {commit-name} [phase-N] [task-N] {설명}
-  ↓
+  ↓ (커밋 없음 — Task 끝에 한 번)
 [coder]                       최소 구현
   ↓ 자동 빌드 → Green 자동 판정 (실패 시 멈춤)
 [code-review]                 커밋 전 버그 게이트 (read-only, 심각 버그 시 멈춤)
-  ↓
-git commit  feat: {commit-name} [phase-N] [task-N] {설명}
   ↓
 [verifier]                    read-only 검증 리포트
   ↓ PASS 판정 (FAIL 시 멈춤)
 [simplify]                    refactor (내장 skill)
   ↓ 자동 빌드 → Green 유지 확인
-git commit  refactor: {commit-name} [phase-N] [task-N] {설명}
+git commit  plan 의 C{n} 메시지   (C{n} 이 HEAD·미push면 --amend)
   ↓
 plan.md Task 체크 + handoff.md commit log 갱신
 ────────────────────────
@@ -87,7 +84,7 @@ plan.md Task 체크 + handoff.md commit log 갱신
 
 ## TDD 사이클 진행
 - Task 단위 진행은 `/work` 스킬을 호출한다. (`/work` 1회 = Task 1개 완료)
-- `/work` 가 다음 순서를 자동 강제: test-coder → 빌드 → test 커밋 → coder → 빌드 → code-review(커밋 전 버그 게이트) → code 커밋 → verifier → simplify → refactor 커밋.
+- `/work` 가 다음 순서를 자동 강제: test-coder → 빌드 → coder → 빌드 → code-review(커밋 전 버그 게이트) → verifier → simplify → 커밋 계획의 해당 커밋에 넣음(새 커밋 또는 미push amend).
 - 사용자가 명시적으로 건너뛰지 않는 한 위 순서를 임의 변경하지 않는다.
 - code-review / refactor 단계는 Claude Code 내장 `code-review` / `simplify` skill 을 사용한다 (별도 설치 불필요).
 - code-review 는 read-only(`--fix`/`--comment` 미사용, low/medium effort)로 구현 diff 의 버그만 게이트한다 — 심각 버그 발견 시 커밋 전에 멈추고 사용자 결정.
@@ -100,8 +97,11 @@ plan.md Task 체크 + handoff.md commit log 갱신
 - 본 프로젝트 빌드 명령: `./gradlew test`   ← 프로젝트마다 수정 (`/work` 가 이 라인을 grep 한다)
 
 ## 커밋 컨벤션
-- 형식: `feat: {commit-name} [phase-N] [task-N] {설명}`
-  - commit-name 은 `workspace/plan.md` 의 `commit name` 필드 사용
+- 형식: `{type}: {한국어 설명} [{ticket}]` (필요하면 `fix(otc): ...` 처럼 scope)
+  - 커밋은 최대한 적게, 그래도 구분되게: `/plan` 이 `# Commits` 에 커밋 계획을 정한다 (기본 1개, 성격이 다른 변경이 섞일 때만 2~3개)
+  - `/work` 는 Task 를 그 Task 의 커밋에 넣는다. 같은 커밋이 HEAD 이고 push 전이면 amend 로 합친다
+  - Task·Phase 단위로 커밋을 나누지 않는다
+  - `[phase-N]` `[task-N]` 태그, prefix, `Co-Authored-By` trailer 를 쓰지 않는다
 - 커밋 직후 `workspace/handoff.md` 의 `commit log` 섹션 업데이트
 - `git push` 는 사용자가 직접 수행 (자동 push 금지)
 

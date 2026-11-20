@@ -1,13 +1,13 @@
 ---
 name: close
-description: "workspace/ 의 작업이 완료되었을 때 plan.md + handoff.md 를 archive/ 로 이동하고 brain 아카이빙을 안내하는 스킬.
+description: "workspace/ 의 작업이 완료되었을 때 plan.md + handoff.md 를 archive/ 로 이동하고 brain(개인 지식베이스)에 작업 기록을 남기는 스킬.
   '작업 완료', '클로즈', 'close', '아카이브해줘', '다 끝났어' 등을 요청할 때 사용한다."
 ---
 
 # /close — 작업 완료 + archive 이동
 
 `workspace/plan.md` + `workspace/handoff.md` 를 `workspace/archive/{N}_{slug}/` 로 이동하고
-brain 아카이빙 경로를 안내한다.
+brain 이 있으면 brain 규칙대로 작업 기록을 남긴다.
 
 ## 전제 조건
 
@@ -44,21 +44,28 @@ brain 아카이빙 경로를 안내한다.
 `workspace/archive/{N}_{slug}/` 폴더 생성 후
 `workspace/plan.md`, `workspace/handoff.md` 를 해당 폴더로 이동.
 
-### Step 6: brain 아카이빙 안내
+### Step 6: brain 기록
+
+brain = 사용자의 개인 지식베이스(LLM wiki). 위치는 아래 순서로 찾는다.
+1. 로드된 CLAUDE.md 에 brain 위치가 적혀 있으면 그 경로
+2. 없으면 프로젝트 루트와 그 상위 폴더에서 `brain/` 디렉토리 탐색
+3. 둘 다 없으면 이 Step 을 건너뛰고 Step 7 에서 "brain 없음" 으로 보고
+
+brain 을 찾았으면 안내만 하지 말고 **실제로 기록한다**.
+1. brain 의 `CLAUDE.md` 와 위키 폴더의 `CLAUDE.md` 를 읽는다. 폴더 구조·frontmatter·index/log 갱신·작성 방식은 모두 이 규칙을 따른다 (이 스킬에 경로나 형식을 따로 정하지 않는다)
+2. 소스는 방금 이동한 `workspace/archive/{N}_{slug}/plan.md`·`handoff.md` 와 이번 작업의 커밋·MR 내용이다
+3. 같은 프로젝트 페이지가 이미 있으면 새로 만들지 않고 그 페이지에 이번 작업을 추가한다
+4. 규칙이 요구하는 index·log 갱신까지 끝낸다
+
+### Step 7: 결과 보고
 
 ```
-✅ archive 완료
+✅ close 완료
 
-이동 경로: workspace/archive/{N}_{slug}/
+archive: workspace/archive/{N}_{slug}/
+brain 기록: {갱신·생성한 페이지 경로 목록 | brain 없음 → 건너뜀}
 
-brain 아카이빙 (선택, brain = 사용자의 개인 지식베이스 repo · 없으면 건너뜀):
-  의미 있는 결정이나 교훈은 brain 에 기록을 권장합니다.
-  - 중요 설계 결정 → brain/wiki/analyses/ 또는 concepts/
-  - 재발 방지 사항 → brain 운영자에게 ingest 요청
-
-workspace/ 상태:
-  plan.md, handoff.md 이동 완료.
-  다음 작업 시 /plan 으로 새로 시작하세요.
+다음 작업 시 /plan 으로 새로 시작하세요.
 ```
 
 ## 주의사항
